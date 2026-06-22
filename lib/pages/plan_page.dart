@@ -19,11 +19,27 @@ class _PlanPageState extends State<PlanPage> {
   FilterStatus selectedFilter = FilterStatus.all;
   late List<Plan> showList;
   late List<int> indexMap;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
     refreshFilter();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Plan> get _filteredList {
+    if (_searchQuery.isEmpty) return showList;
+    return showList.where((p) =>
+      p.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      p.subtitle.toLowerCase().contains(_searchQuery.toLowerCase())
+    ).toList();
   }
 
   void refreshFilter() {
@@ -113,9 +129,9 @@ class _PlanPageState extends State<PlanPage> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: AppColors.cardBg(context),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -123,7 +139,7 @@ class _PlanPageState extends State<PlanPage> {
           children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            const Text('修改计划状态', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('修改计划状态', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context))),
             const SizedBox(height: 24),
             _statusOption(Icons.check_circle_rounded, '已完成', const Color(0xFF4CAF50), () {
               widget.onUpdate(originIndex, PlanStatus.completed);
@@ -168,8 +184,13 @@ class _PlanPageState extends State<PlanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bg = AppColors.surface(context);
+    final cardBg = AppColors.cardBg(context);
+    final textPri = AppColors.textPrimary(context);
+    final textSec = AppColors.textSecondary(context);
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: bg,
       appBar: AppBar(
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -189,22 +210,17 @@ class _PlanPageState extends State<PlanPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
+            const DrawerHeader(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(colors: [AppColors.gradientTop, AppColors.gradientBottom]),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), shape: BoxShape.circle),
-                    child: const Icon(Icons.checklist_rounded, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('我的计划表', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                  Text('共 ${widget.sourceList.length} 项计划', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  CircleAvatar(radius: 24, backgroundColor: Colors.white24, child: Icon(Icons.checklist_rounded, color: Colors.white)),
+                  SizedBox(height: 12),
+                  Text('我的计划表', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -218,23 +234,51 @@ class _PlanPageState extends State<PlanPage> {
       ),
       body: Column(
         children: [
+          // ---- 搜索栏 ----
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _searchQuery = v.trim()),
+              decoration: InputDecoration(
+                hintText: '搜索计划...',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: cardBg,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
           Expanded(
-            child: showList.isEmpty
+            child: _filteredList.isEmpty
                 ? Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.inbox_rounded, size: 64, color: Colors.grey[300]),
                   const SizedBox(height: 12),
-                  const Text('暂无计划', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
+                  Text('暂无计划', style: TextStyle(fontSize: 16, color: textSec)),
                 ],
               ),
             )
                 : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: showList.length,
+              itemCount: _filteredList.length,
               itemBuilder: (_, i) {
-                final p = showList[i];
+                final p = _filteredList[i];
                 final color = _statusColor(p.status);
                 return GestureDetector(
                   onTap: () => showStatusSheet(i),
@@ -243,7 +287,7 @@ class _PlanPageState extends State<PlanPage> {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(18),
                       border: Border(left: BorderSide(color: color, width: 4)),
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 3))],
@@ -270,7 +314,7 @@ class _PlanPageState extends State<PlanPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(p.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                              Text(p.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPri)),
                               const SizedBox(height: 4),
                               Row(children: [
                                 Icon(Icons.access_time_rounded, size: 14, color: Colors.grey[400]),

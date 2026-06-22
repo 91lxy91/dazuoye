@@ -4,7 +4,9 @@ import '../models/plan.dart';
 
 class StatisticPage extends StatefulWidget {
   final List<Plan> sourceList;
-  const StatisticPage({super.key, required this.sourceList});
+  final VoidCallback toggleTheme;
+  final bool isDark;
+  const StatisticPage({super.key, required this.sourceList, required this.toggleTheme, required this.isDark});
 
   @override
   State<StatisticPage> createState() => _StatisticPageState();
@@ -18,9 +20,12 @@ class _StatisticPageState extends State<StatisticPage> {
     final prog = widget.sourceList.where((e) => e.status == PlanStatus.inProgress).length;
     final wait = widget.sourceList.where((e) => e.status == PlanStatus.notStarted).length;
     final rate = total == 0 ? 0.0 : comp / total;
+    final cardBg = AppColors.cardBg(context);
+    final textPri = AppColors.textPrimary(context);
+    final textSec = AppColors.textSecondary(context);
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.surface(context),
       appBar: AppBar(
         flexibleSpace: Container(
           decoration: const BoxDecoration(
@@ -29,21 +34,28 @@ class _StatisticPageState extends State<StatisticPage> {
           ),
         ),
         title: const Text('数据统计'),
+        actions: [
+          IconButton(
+            icon: Icon(widget.isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded),
+            onPressed: widget.toggleTheme,
+            tooltip: widget.isDark ? '切换浅色模式' : '切换深色模式',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildRateCard(rate, comp, total),
+            _buildRateCard(rate, comp, total, cardBg, textPri, textSec),
             const SizedBox(height: 16),
-            _buildStatRow(comp, prog, wait),
+            _buildStatRow(comp, prog, wait, cardBg, textSec),
             const SizedBox(height: 28),
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
-              child: Text('计划明细', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+              child: Text('计划明细', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPri)),
             ),
             const SizedBox(height: 14),
-            ...widget.sourceList.asMap().entries.map((e) => _buildPlanItem(e.key, e.value)),
+            ...widget.sourceList.asMap().entries.map((e) => _buildPlanItem(e.key, e.value, cardBg, textSec)),
             const SizedBox(height: 30),
           ],
         ),
@@ -51,17 +63,17 @@ class _StatisticPageState extends State<StatisticPage> {
     );
   }
 
-  Widget _buildRateCard(double rate, int comp, int total) {
+  Widget _buildRateCard(double rate, int comp, int total, Color cardBg, Color textPri, Color textSec) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 30),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12)],
       ),
       child: Column(
         children: [
-          const Text('计划完成率', style: TextStyle(fontSize: 15, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+          Text('计划完成率', style: TextStyle(fontSize: 15, color: textSec, fontWeight: FontWeight.w500)),
           const SizedBox(height: 20),
           SizedBox(
             width: 140, height: 140,
@@ -81,36 +93,36 @@ class _StatisticPageState extends State<StatisticPage> {
                   children: [
                     Text('${(rate * 100).toStringAsFixed(0)}%',
                         style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.primary)),
-                    Text('$comp/$total', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                    Text('$comp/$total', style: TextStyle(fontSize: 13, color: textSec)),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          Text('已完成 $comp 项，继续加油！', style: const TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+          Text('已完成 $comp 项，继续加油！', style: TextStyle(fontSize: 14, color: textSec)),
         ],
       ),
     );
   }
 
-  Widget _buildStatRow(int comp, int prog, int wait) {
+  Widget _buildStatRow(int comp, int prog, int wait, Color cardBg, Color textSec) {
     return Row(
       children: [
-        Expanded(child: _statCard('已完成', comp, const Color(0xFF4CAF50), Icons.task_alt_rounded)),
+        Expanded(child: _statCard('已完成', comp, const Color(0xFF4CAF50), Icons.task_alt_rounded, cardBg, textSec)),
         const SizedBox(width: 12),
-        Expanded(child: _statCard('进行中', prog, const Color(0xFF2196F3), Icons.play_circle_rounded)),
+        Expanded(child: _statCard('进行中', prog, const Color(0xFF2196F3), Icons.play_circle_rounded, cardBg, textSec)),
         const SizedBox(width: 12),
-        Expanded(child: _statCard('未开始', wait, const Color(0xFFFF9800), Icons.pending_rounded)),
+        Expanded(child: _statCard('未开始', wait, const Color(0xFFFF9800), Icons.pending_rounded, cardBg, textSec)),
       ],
     );
   }
 
-  Widget _statCard(String label, int num, Color color, IconData icon) {
+  Widget _statCard(String label, int num, Color color, IconData icon, Color cardBg, Color textSec) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)],
       ),
@@ -123,13 +135,13 @@ class _StatisticPageState extends State<StatisticPage> {
           ),
           const SizedBox(height: 10),
           Text('$num', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 12, color: textSec)),
         ],
       ),
     );
   }
 
-  Widget _buildPlanItem(int idx, Plan p) {
+  Widget _buildPlanItem(int idx, Plan p, Color cardBg, Color textSec) {
     final color = p.status == PlanStatus.completed
         ? const Color(0xFF4CAF50)
         : p.status == PlanStatus.inProgress
@@ -146,7 +158,7 @@ class _StatisticPageState extends State<StatisticPage> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6)],
       ),
@@ -164,7 +176,7 @@ class _StatisticPageState extends State<StatisticPage> {
               children: [
                 Text(p.title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
-                Text(p.subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(p.subtitle, style: TextStyle(fontSize: 12, color: textSec)),
               ],
             ),
           ),

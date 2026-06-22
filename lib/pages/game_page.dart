@@ -134,21 +134,21 @@ class _GamePageState extends State<GamePage> {
       ),
       body: Column(
         children: [
-          _buildTopBar(),
-          _buildGameArea(),
-          _buildHistory(),
+          _buildTopBar(context),
+          _buildGameArea(context),
+          _buildHistory(context),
           const SizedBox(height: 8),
         ],
       ),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg(context),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6)],
       ),
       child: Row(
@@ -176,13 +176,13 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  Widget _buildGameArea() {
+  Widget _buildGameArea(BuildContext context) {
     return Expanded(
       child: Container(
         key: _gameAreaKey,
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBg(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
         ),
@@ -191,15 +191,15 @@ class _GamePageState extends State<GamePage> {
           child: Stack(
             children: [
               if (!_isPlaying && !_gameOver)
-                const Center(
+                Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.sports_esports_rounded, size: 64, color: Color(0xFFDDDDF5)),
-                      SizedBox(height: 12),
-                      Text('点击"开始游戏"按钮', style: TextStyle(fontSize: 16, color: AppColors.textSecondary)),
-                      SizedBox(height: 4),
-                      Text('30秒内点击小球得分！', style: TextStyle(fontSize: 13, color: Color(0xFFBBBBD5))),
+                      const Icon(Icons.sports_esports_rounded, size: 64, color: Color(0xFFDDDDF5)),
+                      const SizedBox(height: 12),
+                      Text('点击"开始游戏"按钮', style: TextStyle(fontSize: 16, color: AppColors.textSecondary(context))),
+                      const SizedBox(height: 4),
+                      const Text('30秒内点击小球得分！', style: TextStyle(fontSize: 13, color: Color(0xFFBBBBD5))),
                     ],
                   ),
                 ),
@@ -211,9 +211,9 @@ class _GamePageState extends State<GamePage> {
                       const Icon(Icons.celebration_rounded, size: 64, color: AppColors.accent),
                       const SizedBox(height: 12),
                       Text('游戏结束！得分: $_score',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary(context))),
                       const SizedBox(height: 8),
-                      const Text('点击上方"再来一局"继续挑战', style: TextStyle(fontSize: 14, color: AppColors.textSecondary)),
+                      Text('点击上方"再来一局"继续挑战', style: TextStyle(fontSize: 14, color: AppColors.textSecondary(context))),
                     ],
                   ),
                 ),
@@ -239,29 +239,30 @@ class _GamePageState extends State<GamePage> {
     );
   }
 
-  Widget _buildHistory() {
+  Widget _buildHistory(BuildContext context) {
+    final textPri = AppColors.textPrimary(context);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBg(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
-            Icon(Icons.history_rounded, color: AppColors.primary, size: 22),
-            SizedBox(width: 8),
-            Text('历史记录', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          Row(children: [
+            const Icon(Icons.history_rounded, color: AppColors.primary, size: 22),
+            const SizedBox(width: 8),
+            Text('历史记录', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPri)),
           ]),
           const SizedBox(height: 12),
           _history.isEmpty
               ? const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
-            child: Center(child: Text('暂无记录，快来挑战吧！', style: TextStyle(color: AppColors.textSecondary))),
+            child: Center(child: Text('暂无记录，快来挑战吧！', style: TextStyle(color: AppColors.textSecondaryLight))),
           )
               : SizedBox(
             height: 60,

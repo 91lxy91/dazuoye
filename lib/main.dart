@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'theme/app_colors.dart';
 import 'models/plan.dart';
 import 'pages/profile_page.dart';
@@ -9,8 +10,34 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isDark = prefs.getBool('dark_mode') ?? false;
+    setState(() => _themeMode = isDark ? ThemeMode.dark : ThemeMode.light);
+  }
+
+  Future<void> toggleTheme() async {
+    final newMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('dark_mode', newMode == ThemeMode.dark);
+    setState(() => _themeMode = newMode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,21 +58,47 @@ class MyApp extends StatelessWidget {
           foregroundColor: Colors.white,
           titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
         ),
-        scaffoldBackgroundColor: AppColors.surface,
+        scaffoldBackgroundColor: AppColors.surfaceLight,
         cardTheme: CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           color: AppColors.cardLight,
         ),
       ),
-      home: const MainTabPage(),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.accent,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+        fontFamily: 'Roboto',
+        appBarTheme: const AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF1A1B23),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          color: const Color(0xFF24252F),
+        ),
+      ),
+      themeMode: _themeMode,
+      home: MainTabPage(toggleTheme: toggleTheme, isDark: _themeMode == ThemeMode.dark),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
 class MainTabPage extends StatefulWidget {
-  const MainTabPage({super.key});
+  final VoidCallback toggleTheme;
+  final bool isDark;
+  const MainTabPage({super.key, required this.toggleTheme, required this.isDark});
 
   @override
   State<MainTabPage> createState() => _MainTabPageState();
@@ -81,7 +134,7 @@ class _MainTabPageState extends State<MainTabPage> {
         children: [
           ProfilePage(parentChangeTab: changeTab),
           PlanPage(sourceList: allPlanList, onUpdate: _updatePlanStatus, onAdd: _addPlan, onEdit: _editPlan, onDelete: _deletePlan),
-          StatisticPage(sourceList: allPlanList),
+          StatisticPage(sourceList: allPlanList, toggleTheme: widget.toggleTheme, isDark: widget.isDark),
         ],
       ),
       bottomNavigationBar: Container(
@@ -99,7 +152,7 @@ class _MainTabPageState extends State<MainTabPage> {
             onTap: (i) => setState(() => _currentIndex = i),
             backgroundColor: Colors.white,
             selectedItemColor: AppColors.primary,
-            unselectedItemColor: AppColors.textSecondary,
+            unselectedItemColor: AppColors.textSecondary(context),
             type: BottomNavigationBarType.fixed,
             elevation: 0,
             selectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),

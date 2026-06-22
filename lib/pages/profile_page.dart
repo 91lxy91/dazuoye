@@ -12,17 +12,17 @@ class ProfilePage extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _buildHeader(),
+          _buildHeader(context),
           _buildButtons(context),
           const SizedBox(height: 28),
-          _buildTags(),
+          _buildTags(context),
           const SizedBox(height: 50),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(top: 80, bottom: 50),
@@ -116,7 +116,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildTags() {
+  Widget _buildTags(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Wrap(
